@@ -195,5 +195,4 @@ String sendPhoto() {
     Serial.println(getBody);
   }
   return getBody;
-
 }
