@@ -75,6 +75,7 @@ void initCamera() {
   }
 }
 
+
 void initWiFi() {
   WiFi.mode(WIFI_STA);
   Serial.println();
@@ -143,6 +144,7 @@ String sendPhoto() {
     Serial.print("send image ");
 
     client.write(fb->buf, fb->len);
+
     Serial.println("success");
 
     client.print(tail);
@@ -153,19 +155,28 @@ String sendPhoto() {
 
     while ((startTimer + timoutTimer) > millis()) {
       Serial.print(".");
-      delay(100);      
+      delay(100);
+
       while (client.available()) {
         char c = client.read();
         if (c == '\n') {
-          if (getAll.length()==0) { state=true; }
+          if (getAll.length() == 0) {
+            state = true;
+          }
           getAll = "";
+        } else if (c != '\r') {
+          getAll += String(c);
         }
-        else if (c != '\r') { getAll += String(c); }
-        if (state==true) { getBody += String(c); }
+        if (state == true) {
+          getBody += String(c);
+        }
         startTimer = millis();
       }
-      if (getBody.length()>0) { break; }
+      if (getBody.length() > 0) {
+        break;
+      }
     }
+
     Serial.println();
     client.stop();
     Serial.println(getBody);
@@ -176,6 +187,5 @@ String sendPhoto() {
   }
 
   esp_camera_fb_return(fb);
-  fb = NULL;
   return getBody;
 }
