@@ -146,20 +146,24 @@ String sendPhoto() {
 
     client.print(tail);
 
-    esp_camera_fb_return(fb);
-
     int timoutTimer = 10000;
     long startTimer = millis();
     boolean state = false;
 
-    while ((startTimer + timoutTimer) > millis() && client.available()) {
-      Serial.println("while");
+    while ((startTimer + timoutTimer) > millis()) {
       Serial.print(".");
-      getBody = client.read();
-
-      if (getBody.length() > 0) {
-        break;
+      delay(100);      
+      while (client.available()) {
+        char c = client.read();
+        if (c == '\n') {
+          if (getAll.length()==0) { state=true; }
+          getAll = "";
+        }
+        else if (c != '\r') { getAll += String(c); }
+        if (state==true) { getBody += String(c); }
+        startTimer = millis();
       }
+      if (getBody.length()>0) { break; }
     }
     Serial.println();
     client.stop();
@@ -169,6 +173,8 @@ String sendPhoto() {
     getBody = "Connection to " + serverName + " failed.";
     Serial.println(getBody);
   }
+
+  esp_camera_fb_return(fb);
   fb = NULL;
   return getBody;
 }
