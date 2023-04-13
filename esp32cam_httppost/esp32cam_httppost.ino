@@ -113,6 +113,7 @@ void loop() {
 
 String sendPhoto() {
   String getBody;
+  String getAll;
 
   camera_fb_t* fb = NULL;
   fb = esp_camera_fb_get();
