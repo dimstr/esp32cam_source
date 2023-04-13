@@ -6,7 +6,7 @@
 const char* ssid = "raspberry-wifi";
 const char* password = "123456788";
 
-String serverName = "review-van.at.ply.gg";  // REPLACE WITH YOUR Raspberry Pi IP ADDRESS
+String serverName = "review-van.at.ply.gg";
 
 String serverPath = "/upload";
 
@@ -112,7 +112,6 @@ void loop() {
 }
 
 String sendPhoto() {
-  String getAll;
   String getBody;
 
   camera_fb_t* fb = NULL;
@@ -137,24 +136,14 @@ String sendPhoto() {
     client.println("POST " + serverPath + " HTTP/1.1");
     client.println("Host: " + serverName);
     client.println("Content-Length: " + String(totalLen));
-    client.println("Content-Type: multipart/form-data; boundary=RandomNerdTutorials");
-    client.println();
     client.print(head);
 
     Serial.println("Connection successful! 2");
+    Serial.print("send image ");
 
+    client.write(fb->buf, fb->len);
+    Serial.println("success");
 
-    uint8_t* fbBuf = fb->buf;
-    size_t fbLen = fb->len;
-    for (size_t n = 0; n < fbLen; n = n + 1024) {
-      if (n + 1024 < fbLen) {
-        client.write(fbBuf, 1024);
-        fbBuf += 1024;
-      } else if (fbLen % 1024 > 0) {
-        size_t remainder = fbLen % 1024;
-        client.write(fbBuf, remainder);
-      }
-    }
     client.print(tail);
 
     esp_camera_fb_return(fb);
@@ -163,24 +152,11 @@ String sendPhoto() {
     long startTimer = millis();
     boolean state = false;
 
-    while ((startTimer + timoutTimer) > millis()) {
+    while ((startTimer + timoutTimer) > millis() && client.available()) {
+      Serial.println("while");
       Serial.print(".");
-      delay(100);
-      while (client.available()) {
-        char c = client.read();
-        if (c == '\n') {
-          if (getAll.length() == 0) {
-            state = true;
-          }
-          getAll = "";
-        } else if (c != '\r') {
-          getAll += String(c);
-        }
-        if (state == true) {
-          getBody += String(c);
-        }
-        startTimer = millis();
-      }
+      getBody = client.read();
+
       if (getBody.length() > 0) {
         break;
       }
@@ -189,10 +165,10 @@ String sendPhoto() {
     client.stop();
     Serial.println(getBody);
     Serial.println("Connection successful! 3");
-    fb = NULL;
   } else {
     getBody = "Connection to " + serverName + " failed.";
     Serial.println(getBody);
   }
+  fb = NULL;
   return getBody;
 }
