@@ -55,11 +55,11 @@ void initCamera() {
   config.pin_sscb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000;
+  config.xclk_freq_hz = 10000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
   if (psramFound()) {
-    config.frame_size = FRAMESIZE_UXGA;
+    config.frame_size = FRAMESIZE_HD;
     config.jpeg_quality = 10;
     config.fb_count = 2;
   } else {
@@ -67,7 +67,7 @@ void initCamera() {
     config.jpeg_quality = 12;
     config.fb_count = 1;
   }
-  // Camera init
+
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("Camera init failed with error 0x%x", err);
@@ -93,23 +93,16 @@ void initWiFi() {
 
 void setup() {
   Serial.begin(115200);
-  initWiFi();
-
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
   initCamera();
+
+  initWiFi();
 }
 
 void loop() {
-  for (int i = 0; i <= 5; i++) {
-    sendPhoto();
-    delay(100);
-  }
-  serverPath = "/compareimages";
   sendPhoto();
-  serverPath = "/upload";
-
-  delay(100);
+  delay(10000);
 }
 
 String sendPhoto() {
@@ -128,17 +121,19 @@ String sendPhoto() {
 
   if (client.connect(serverName.c_str(), serverPort)) {
     Serial.println("Connection successful! 1");
-    String head = "--RandomNerdTutorials\r\nContent-Disposition: form-data; name=\"imageFile\"; filename=\"esp32-cam.jpg\"\r\nContent-Type: image/jpeg\r\n\r\n";
-    String tail = "\r\n--RandomNerdTutorials--\r\n";
+    String head = "--RNT\r\nContent-Disposition: form-data; name=\"imageFile\"; filename=\"esp32-cam.jpg\"\r\nContent-Type: image/jpeg\r\n\r\n";
+    String tail = "\r\n--RNT--\r\n";
 
     uint32_t imageLen = fb->len;
     uint32_t extraLen = head.length() + tail.length();
     uint32_t totalLen = imageLen + extraLen;
 
+    Serial.println("totalLen: " + String(totalLen));
+
     client.println("POST " + serverPath + " HTTP/1.1");
     client.println("Host: " + serverName);
     client.println("Content-Length: " + String(totalLen));
-    client.println("Content-Type: multipart/form-data; boundary=RandomNerdTutorials");
+    client.println("Content-Type: multipart/form-data; boundary=RNT");
     client.println();
     client.print(head);
 
@@ -147,13 +142,19 @@ String sendPhoto() {
 
     uint8_t *fbBuf = fb->buf;
     size_t fbLen = fb->len;
-    for (size_t n = 0; n < fbLen; n = n + 1024) {
-      if (n + 1024 < fbLen) {
-        client.write(fbBuf, 1024);
-        fbBuf += 1024;
-      } else if (fbLen % 1024 > 0) {
-        size_t remainder = fbLen % 1024;
+
+    for (size_t n = 0; n < fbLen; n = n + 1288) {
+      Serial.println("n=" +  String(n));
+
+      if (n + 1288 < fbLen) {
+        client.write(fbBuf, 1288);
+        fbBuf += 1288;
+
+      } else if (fbLen % 1288 > 0) {
+        Serial.println("fbLen=" +  String(fbLen));
+        size_t remainder = fbLen % 1288;
         client.write(fbBuf, remainder);
+
       } else {
         Serial.println("Something went wrong");
       }
