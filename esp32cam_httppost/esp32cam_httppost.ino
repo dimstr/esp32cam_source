@@ -138,12 +138,26 @@ String sendPhoto() {
     client.println("POST " + serverPath + " HTTP/1.1");
     client.println("Host: " + serverName);
     client.println("Content-Length: " + String(totalLen));
+    client.println("Content-Type: multipart/form-data; boundary=RandomNerdTutorials");
+    client.println();
     client.print(head);
 
     Serial.println("Connection successful! 2");
     Serial.print("send image ");
 
-    client.write(fb->buf, fb->len);
+    uint8_t *fbBuf = fb->buf;
+    size_t fbLen = fb->len;
+    for (size_t n = 0; n < fbLen; n = n + 1024) {
+      if (n + 1024 < fbLen) {
+        client.write(fbBuf, 1024);
+        fbBuf += 1024;
+      } else if (fbLen % 1024 > 0) {
+        size_t remainder = fbLen % 1024;
+        client.write(fbBuf, remainder);
+      } else {
+        Serial.println("Something went wrong");
+      }
+    }
 
     Serial.println("success");
 
