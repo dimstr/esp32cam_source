@@ -140,18 +140,18 @@ String sendPhoto() {
     Serial.println("Connection successful! 2");
     Serial.print("send image ");
 
-    uint8_t *fbBuf = fb->buf;
+    uint8_t* fbBuf = fb->buf;
     size_t fbLen = fb->len;
 
     for (size_t n = 0; n < fbLen; n = n + 1288) {
-      Serial.println("n=" +  String(n));
+      Serial.println("n=" + String(n));
 
       if (n + 1288 < fbLen) {
         client.write(fbBuf, 1288);
         fbBuf += 1288;
 
       } else if (fbLen % 1288 > 0) {
-        Serial.println("fbLen=" +  String(fbLen));
+        Serial.println("fbLen=" + String(fbLen));
         size_t remainder = fbLen % 1288;
         client.write(fbBuf, remainder);
 
