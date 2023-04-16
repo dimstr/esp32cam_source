@@ -120,9 +120,9 @@ String sendPhoto() {
   Serial.println("Connecting to server: " + serverName);
 
   if (client.connect(serverName.c_str(), serverPort)) {
-    Serial.println("Connection successful! 1");
-    String head = "--RNT\r\nContent-Disposition: form-data; name=\"imageFile\"; filename=\"esp32-cam.jpg\"\r\nContent-Type: image/jpeg\r\n\r\n";
-    String tail = "\r\n--RNT--\r\n";
+    Serial.println("Connection successful!");
+    String head = "--RandomNerdTutorials\r\nContent-Disposition: form-data; name=\"imageFile\"; filename=\"esp32-cam.jpg\"\r\nContent-Type: image/jpeg\r\n\r\n";
+    String tail = "\r\n--RandomNerdTutorials--\r\n";
 
     uint32_t imageLen = fb->len;
     uint32_t extraLen = head.length() + tail.length();
@@ -133,16 +133,14 @@ String sendPhoto() {
     client.println("POST " + serverPath + " HTTP/1.1");
     client.println("Host: " + serverName);
     client.println("Content-Length: " + String(totalLen));
-    client.println("Content-Type: multipart/form-data; boundary=RNT");
+    client.println("Content-Type: multipart/form-data; boundary=RandomNerdTutorials");
     client.println();
     client.print(head);
 
-    Serial.println("Connection successful! 2");
-    Serial.print("send image ");
+    Serial.println("sending image");
 
     uint8_t* fbBuf = fb->buf;
     size_t fbLen = fb->len;
-
     for (size_t n = 0; n < fbLen; n = n + 1288) {
       Serial.println("n=" + String(n));
 
@@ -159,10 +157,12 @@ String sendPhoto() {
         Serial.println("Something went wrong");
       }
     }
+    client.print(tail);
 
     Serial.println("success");
+    Serial.println("Connection successful! 2");
 
-    client.print(tail);
+    esp_camera_fb_return(fb);
 
     int timoutTimer = 10000;
     long startTimer = millis();
@@ -201,6 +201,5 @@ String sendPhoto() {
     Serial.println(getBody);
   }
 
-  esp_camera_fb_return(fb);
   return getBody;
 }
